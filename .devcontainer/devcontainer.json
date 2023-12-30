@@ -4,16 +4,20 @@
     "name": "Rust",
     // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
     "image": "mcr.microsoft.com/devcontainers/rust:1-1-bookworm",
-    "extensions": [
-        "editorconfig.editorconfig",
-        "rust-lang.rust-analyzer",
-        "vadimcn.vscode-lldb",
-        "tamasfe.even-better-toml",
-        "serayuzgur.crates",
-        "github.copilot",
-        "gitgub.copilot-chat",
-        "ms-azuretools.vscode-docker"
-    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "editorconfig.editorconfig",
+                "rust-lang.rust-analyzer",
+                "vadimcn.vscode-lldb",
+                "tamasfe.even-better-toml",
+                "serayuzgur.crates",
+                "github.copilot",
+                "gitgub.copilot-chat",
+                "ms-azuretools.vscode-docker"
+            ]
+        }
+    }
     // Use 'mounts' to make the cargo cache persistent in a Docker Volume.
     // "mounts": [
     // 	{
