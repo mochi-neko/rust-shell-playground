@@ -1,6 +1,10 @@
+mod builtin_command;
+
 use std::io;
 
-fn main() {
+use builtin_command::BuiltinCommand;
+
+fn main() -> anyhow::Result<()> {
     // Create input buffer
     let mut input = String::new();
 
@@ -9,9 +13,7 @@ fn main() {
         input.clear();
 
         // Read input from stdin
-        io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read line");
+        io::stdin().read_line(&mut input)?;
 
         // Split input into elements
         let elements: Vec<&str> = input
@@ -27,8 +29,18 @@ fn main() {
         let command = elements[0];
         let args = &elements[1..];
 
-        // Print command and args
-        println!("Command: {:?}", command);
-        println!("Args: {:?}", args);
+        // Parse command
+        match BuiltinCommand::from_str(command) {
+            // If command is builtin, execute it
+            | Some(builtin_command) => {
+                builtin_command.execute(args)?;
+            },
+            // If command is not builtin, execute it
+            | None => {
+                // TODO: Execute external command
+            },
+        }
     }
+
+    Ok(())
 }
