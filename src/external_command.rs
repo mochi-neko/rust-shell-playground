@@ -1,6 +1,5 @@
 use std::env;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 /// External commands in shell.
 pub(crate) struct ExternalCommand {
@@ -38,8 +37,8 @@ impl ExternalCommand {
         self,
         args: &[&str],
     ) -> anyhow::Result<()> {
-        // Execute command
-        let output = Command::new(self.path)
+        // Execute command by `std::process::Command`
+        let output = std::process::Command::new(self.path)
             .args(args)
             .output()?;
 

@@ -1,8 +1,6 @@
 mod builtin_command;
 mod external_command;
 
-use std::io;
-
 use builtin_command::BuiltinCommand;
 use external_command::ExternalCommand;
 
@@ -15,7 +13,7 @@ fn main() -> anyhow::Result<()> {
         input.clear();
 
         // Read input from stdin
-        io::stdin().read_line(&mut input)?;
+        std::io::stdin().read_line(&mut input)?;
 
         // Split input into elements
         let elements: Vec<&str> = input
@@ -71,7 +69,7 @@ enum Command {
     NotFound(String),
 }
 
-/// Finds a command.
+/// Finds a command from string.
 fn find_command(command: &str) -> anyhow::Result<Command> {
     // Try parse builtin command
     match BuiltinCommand::parse(command) {
