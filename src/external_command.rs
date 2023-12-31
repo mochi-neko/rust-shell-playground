@@ -8,6 +8,7 @@ pub(crate) struct ExternalCommand {
 }
 
 impl ExternalCommand {
+    /// Finds a command if it exists as an external command.
     pub(crate) fn find_command(command: &str) -> anyhow::Result<Option<Self>> {
         // For relative and absolute paths, check if the path exists
         if command.contains('/') {
@@ -32,6 +33,7 @@ impl ExternalCommand {
         Ok(None)
     }
 
+    /// Executes an external command with arguments.
     pub(crate) fn execute(
         self,
         args: &[&str],
@@ -48,8 +50,9 @@ impl ExternalCommand {
             );
             Ok(())
         } else {
-            let result = String::from_utf8_lossy(&output.stderr).into_owned();
-            Err(anyhow::anyhow!(result))
+            Err(anyhow::anyhow!(
+                String::from_utf8_lossy(&output.stderr).into_owned()
+            ))
         }
     }
 }

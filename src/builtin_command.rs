@@ -5,6 +5,7 @@ pub(crate) enum BuiltinCommand {
 }
 
 impl BuiltinCommand {
+    /// Parses a string to a command if it is a builtin command.
     pub(crate) fn parse(s: &str) -> Option<Self> {
         match s {
             | "echo" => Some(BuiltinCommand::Echo),
@@ -13,6 +14,7 @@ impl BuiltinCommand {
         }
     }
 
+    /// Executes a builtin command with arguments.
     pub(crate) fn execute(
         self,
         args: &[&str],

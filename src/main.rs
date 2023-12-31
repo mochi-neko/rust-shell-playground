@@ -32,7 +32,9 @@ fn main() -> anyhow::Result<()> {
         let args = &elements[1..];
 
         // Parse and execute command
-        match find_command(command) {
+        let command = find_command(command)?;
+
+        match command {
             | Command::Builtin(builtin_command) => {
                 builtin_command
                     .execute(args)
@@ -58,9 +60,6 @@ fn main() -> anyhow::Result<()> {
             | Command::NotFound(command) => {
                 eprintln!("Command not found: {}", command);
             },
-            | Command::Error(error) => {
-                eprintln!("Error: {:?}", error);
-            },
         }
     }
 }
@@ -70,20 +69,19 @@ enum Command {
     Builtin(BuiltinCommand),
     External(ExternalCommand),
     NotFound(String),
-    Error(anyhow::Error),
 }
 
-fn find_command(command: &str) -> Command {
-    BuiltinCommand::parse(command)
-        .map(Command::Builtin)
-        .unwrap_or_else(|| {
-            ExternalCommand::find_command(command)
-                .map(|external_command| {
-                    external_command.map_or_else(
-                        || Command::NotFound(command.to_string()),
-                        Command::External,
-                    )
-                })
-                .unwrap_or_else(Command::Error)
-        })
+/// Finds a command.
+fn find_command(command: &str) -> anyhow::Result<Command> {
+    // Try parse builtin command
+    match BuiltinCommand::parse(command) {
+        | Some(builtin_command) => Ok(Command::Builtin(builtin_command)),
+        // Find external command
+        | None => match ExternalCommand::find_command(command)? {
+            // Found external command
+            | Some(external_command) => Ok(Command::External(external_command)),
+            // Not found in external command
+            | None => Ok(Command::NotFound(command.to_string())),
+        },
+    }
 }
