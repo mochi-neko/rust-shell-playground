@@ -1,8 +1,10 @@
 mod builtin_command;
+mod external_command;
 
 use std::io;
 
 use builtin_command::BuiltinCommand;
+use external_command::ExternalCommand;
 
 fn main() -> anyhow::Result<()> {
     // Create input buffer
@@ -29,18 +31,44 @@ fn main() -> anyhow::Result<()> {
         let command = elements[0];
         let args = &elements[1..];
 
-        // Parse command
-        match BuiltinCommand::from_str(command) {
-            // If command is builtin, execute it
-            | Some(builtin_command) => {
+        // Parse and execute command
+        match find_command(command) {
+            | Command::Builtin(builtin_command) => {
                 builtin_command.execute(args)?;
             },
-            // If command is not builtin, execute it
-            | None => {
-                // TODO: Execute external command
+            | Command::External(external_command) => {
+                external_command.execute(args)?;
+            },
+            | Command::NotFound(command) => {
+                eprintln!("Command not found: {}", command);
+            },
+            | Command::Error(error) => {
+                eprintln!("Error: {:?}", error);
             },
         }
     }
 
     Ok(())
+}
+
+enum Command {
+    Builtin(BuiltinCommand),
+    External(ExternalCommand),
+    NotFound(String),
+    Error(anyhow::Error),
+}
+
+fn find_command(command: &str) -> Command {
+    BuiltinCommand::from_str(command)
+        .map(Command::Builtin)
+        .unwrap_or_else(|| {
+            ExternalCommand::find_command(command)
+                .map(|external_command| {
+                    external_command.map_or_else(
+                        || Command::NotFound(command.to_string()),
+                        Command::External,
+                    )
+                })
+                .unwrap_or_else(Command::Error)
+        })
 }
