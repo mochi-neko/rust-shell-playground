@@ -1,3 +1,4 @@
+/// Builtin commands in shell.
 pub(crate) enum BuiltinCommand {
     Echo,
     Exit,

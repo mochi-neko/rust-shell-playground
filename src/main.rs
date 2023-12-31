@@ -34,10 +34,26 @@ fn main() -> anyhow::Result<()> {
         // Parse and execute command
         match find_command(command) {
             | Command::Builtin(builtin_command) => {
-                builtin_command.execute(args)?;
+                builtin_command
+                    .execute(args)
+                    .map_err(|error| {
+                        eprintln!(
+                            "Execute builtin command error: {:?}",
+                            error
+                        );
+                        error
+                    })?;
             },
             | Command::External(external_command) => {
-                external_command.execute(args)?;
+                external_command
+                    .execute(args)
+                    .map_err(|error| {
+                        eprintln!(
+                            "Execute external command error: {:?}",
+                            error
+                        );
+                        error
+                    })?;
             },
             | Command::NotFound(command) => {
                 eprintln!("Command not found: {}", command);
@@ -51,6 +67,7 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Commands in shell.
 enum Command {
     Builtin(BuiltinCommand),
     External(ExternalCommand),
