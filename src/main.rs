@@ -63,8 +63,6 @@ fn main() -> anyhow::Result<()> {
             },
         }
     }
-
-    Ok(())
 }
 
 /// Commands in shell.
@@ -76,7 +74,7 @@ enum Command {
 }
 
 fn find_command(command: &str) -> Command {
-    BuiltinCommand::from_str(command)
+    BuiltinCommand::parse(command)
         .map(Command::Builtin)
         .unwrap_or_else(|| {
             ExternalCommand::find_command(command)

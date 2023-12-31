@@ -5,7 +5,7 @@ pub(crate) enum BuiltinCommand {
 }
 
 impl BuiltinCommand {
-    pub(crate) fn from_str(s: &str) -> Option<Self> {
+    pub(crate) fn parse(s: &str) -> Option<Self> {
         match s {
             | "echo" => Some(BuiltinCommand::Echo),
             | "exit" => Some(BuiltinCommand::Exit),
