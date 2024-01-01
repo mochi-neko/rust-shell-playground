@@ -5,12 +5,9 @@ use builtin_command::BuiltinCommand;
 use external_command::ExternalCommand;
 
 fn main() -> anyhow::Result<()> {
-    // Create input buffer
-    let mut input = String::new();
-
     loop {
-        // Clear input buffer
-        input.clear();
+        // Create input buffer
+        let mut input = String::new();
 
         // Read input from stdin
         std::io::stdin().read_line(&mut input)?;
