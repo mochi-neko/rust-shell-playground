@@ -52,6 +52,11 @@ fn interactive_mode() -> anyhow::Result<()> {
 
 /// Interprets a line as command.
 fn interpret_line(line: String) -> anyhow::Result<()> {
+    // Ignore comment lines
+    if line.starts_with('#') {
+        return Ok(());
+    }
+
     // Split input into elements
     let elements: Vec<&str> = line
         .split_whitespace()
