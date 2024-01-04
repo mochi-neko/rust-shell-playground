@@ -4,7 +4,16 @@ mod external_command;
 use builtin_command::BuiltinCommand;
 use external_command::ExternalCommand;
 
+use std::sync::{atomic::AtomicBool, Arc};
+
 fn main() -> anyhow::Result<()> {
+    let int = Arc::new(AtomicBool::new(false));
+    // Deactivate Ctrl-C
+    signal_hook::flag::register(
+        signal_hook::consts::SIGINT,
+        Arc::clone(&int),
+    )?;
+
     loop {
         // Create input buffer
         let mut input = String::new();

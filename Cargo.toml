@@ -10,3 +10,4 @@ readme = "README.md"
 
 [dependencies]
 anyhow = "1.0.78"
+signal-hook = "0.3.17"
