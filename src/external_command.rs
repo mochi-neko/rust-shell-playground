@@ -36,18 +36,14 @@ impl ExternalCommand {
     pub(crate) fn execute(
         self,
         args: &[&str],
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<String> {
         // Execute command by `std::process::Command`
         let output = std::process::Command::new(self.path)
             .args(args)
             .output()?;
 
         if output.status.success() {
-            println!(
-                "{}",
-                String::from_utf8_lossy(&output.stdout)
-            );
-            Ok(())
+            Ok(String::from_utf8_lossy(&output.stdout).to_string())
         } else {
             Err(anyhow::anyhow!(
                 String::from_utf8_lossy(&output.stderr).into_owned()

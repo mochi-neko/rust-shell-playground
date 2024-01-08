@@ -1,10 +1,14 @@
 mod builtin_command;
 mod external_command;
 
+use anyhow::anyhow;
 use builtin_command::BuiltinCommand;
 use external_command::ExternalCommand;
 
-use std::sync::{atomic::AtomicBool, Arc};
+use std::{
+    path::PathBuf,
+    sync::{atomic::AtomicBool, Arc},
+};
 
 fn main() -> anyhow::Result<()> {
     // Deactivate Ctrl-C by signal handling
@@ -72,37 +76,80 @@ fn interpret_line(line: String) -> anyhow::Result<()> {
     let args = &elements[1..];
 
     // Parse and execute command
-    let command = find_command(command)?;
-
-    match command {
-        | Command::Builtin(builtin_command) => {
-            builtin_command
-                .execute(args)
-                .map_err(|error| {
-                    eprintln!(
-                        "Execute builtin command error: {:?}",
-                        error
-                    );
-                    error
-                })?;
-        },
-        | Command::External(external_command) => {
-            external_command
-                .execute(args)
-                .map_err(|error| {
-                    eprintln!(
-                        "Execute external command error: {:?}",
-                        error
-                    );
-                    error
-                })?;
-        },
-        | Command::NotFound(command) => {
-            eprintln!("Command not found: {}", command);
-        },
-    }
+    let command = Command::find(command)?;
+    let (output, args) = Output::from_args(args)?;
+    command.execute(args, output)?;
 
     Ok(())
+}
+
+pub enum Output {
+    Stdout,
+    File(PathBuf),
+}
+
+impl Output {
+    fn from_args<'a>(
+        args: &'a [&'a str]
+    ) -> anyhow::Result<(Self, &'a [&'a str])> {
+        match args
+            .iter()
+            .filter(|&&arg| arg == ">")
+            .count()
+        {
+            | 0 => Ok((Output::Stdout, args)),
+            | 1 => {
+                let index = args
+                    .iter()
+                    .position(|&arg| arg == ">")
+                    .ok_or(anyhow::anyhow!(
+                        "Redirection symbol not found."
+                    ))?;
+                let path = args
+                    .get(index + 1)
+                    .ok_or(anyhow::anyhow!("File path not found."))?;
+                Ok((
+                    Output::File(PathBuf::from(path)),
+                    &args[..index],
+                ))
+            },
+            | _ => {
+                anyhow::bail!("More than two redirections are not supported.")
+            },
+        }
+    }
+
+    pub fn write(
+        &self,
+        content: String,
+    ) -> anyhow::Result<()> {
+        match self {
+            | Self::Stdout => {
+                println!("{}", content);
+            },
+            | Self::File(path) => {
+                std::fs::write(path, content)?;
+            },
+        };
+
+        Ok(())
+    }
+
+    pub fn write_error(
+        &self,
+        error: anyhow::Error,
+    ) -> anyhow::Result<()> {
+        match self {
+            | Self::Stdout => {
+                eprintln!("{}", error);
+            },
+            | Self::File(path) => {
+                std::fs::write(path, error.to_string())?;
+            },
+        };
+
+        Ok(())
+    }
 }
 
 /// Commands in shell.
@@ -112,17 +159,61 @@ enum Command {
     NotFound(String),
 }
 
-/// Finds a command from string.
-fn find_command(command: &str) -> anyhow::Result<Command> {
-    // Try parse builtin command
-    match BuiltinCommand::parse(command) {
-        | Some(builtin_command) => Ok(Command::Builtin(builtin_command)),
-        // Find external command
-        | None => match ExternalCommand::find_command(command)? {
-            // Found external command
-            | Some(external_command) => Ok(Command::External(external_command)),
-            // Not found in external command
-            | None => Ok(Command::NotFound(command.to_string())),
-        },
+impl Command {
+    /// Finds a command from string.
+    fn find(command: &str) -> anyhow::Result<Command> {
+        // Try parse builtin command
+        match BuiltinCommand::parse(command) {
+            | Some(builtin_command) => Ok(Command::Builtin(builtin_command)),
+            // Find external command
+            | None => match ExternalCommand::find_command(command)? {
+                // Found external command
+                | Some(external_command) => {
+                    Ok(Command::External(external_command))
+                },
+                // Not found in external command
+                | None => Ok(Command::NotFound(command.to_string())),
+            },
+        }
+    }
+
+    fn execute(
+        self,
+        args: &[&str],
+        output: Output,
+    ) -> anyhow::Result<()> {
+        let result = match self {
+            | Command::Builtin(builtin_command) => builtin_command
+                .execute(args)
+                .map_err(|error| {
+                    anyhow!(
+                        "Execute builtin command error: {:?}",
+                        error
+                    )
+                }),
+            | Command::External(external_command) => external_command
+                .execute(args)
+                .map_err(|error| {
+                    anyhow!(
+                        "Execute external command error: {:?}",
+                        error
+                    )
+                }),
+            | Command::NotFound(command) => Err(anyhow!(
+                "Command not found: {:?}",
+                command
+            )),
+        };
+
+        match result {
+            | Ok(content) => {
+                output.write(content)?;
+            },
+            | Err(error) => {
+                output.write_error(error)?;
+            },
+        };
+
+        Ok(())
     }
 }

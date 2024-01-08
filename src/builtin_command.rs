@@ -18,16 +18,12 @@ impl BuiltinCommand {
     pub(crate) fn execute(
         self,
         args: &[&str],
-    ) -> anyhow::Result<()> {
+    ) -> anyhow::Result<String> {
         match self {
-            | BuiltinCommand::Echo => {
-                println!("{}", args.join(" "));
-            },
+            | BuiltinCommand::Echo => Ok(args.join(" ").to_string()),
             | BuiltinCommand::Exit => {
                 std::process::exit(0);
             },
         }
-
-        Ok(())
     }
 }
